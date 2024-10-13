@@ -1,0 +1,29 @@
+local Player = game.Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+local SpeedMultiplier = 2.5 -- Hệ số tốc độ, điều chỉnh giá trị này
+local DistancePerTeleport = 1.5 -- Khoảng cách mỗi lần teleport nhỏ
+local RunService = game:GetService("RunService")
+
+-- Hàm để teleport nhỏ liên tục khi nhân vật di chuyển
+local function TeleportStep()
+    local MoveDirection = Character.Humanoid.MoveDirection
+    if MoveDirection.Magnitude > 0 then
+        -- Tính toán vị trí mới và dịch chuyển nhỏ
+        local NewPosition = HumanoidRootPart.Position + (MoveDirection * DistancePerTeleport)
+        HumanoidRootPart.CFrame = CFrame.new(NewPosition)
+    end
+end
+
+-- Kích hoạt dịch chuyển khi di chuyển
+RunService.RenderStepped:Connect(function()
+    for i = 1, SpeedMultiplier do
+        TeleportStep()
+    end
+end)
+
+-- Đảm bảo script tiếp tục hoạt động sau khi chết
+Player.CharacterAdded:Connect(function(newCharacter)
+    Character = newCharacter
+    HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+end)
