@@ -1,7 +1,7 @@
 local Player = game.Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-local SpeedMultiplier = 2
+local SpeedMultiplier = 2.5
 local DistancePerTeleport = 1.5
 local RunService = game:GetService("RunService")
 
