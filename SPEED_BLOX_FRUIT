@@ -7,6 +7,7 @@ local speedLabel = Instance.new("TextLabel")
 local uiStroke = Instance.new("UIStroke")
 local dragging = false
 local dragInput, dragStart, startPos
+local isTouch = false -- Biến xác định thiết bị cảm ứng
 
 local Player = game.Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
@@ -14,7 +15,9 @@ local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 local SpeedMultiplier = 3.5
 local DistancePerTeleport = 1.5
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
+-- Hàm để teleport nhỏ liên tục khi nhân vật di chuyển
 local function TeleportStep()
     local MoveDirection = Character.Humanoid.MoveDirection
     if MoveDirection.Magnitude > 0 then
@@ -34,20 +37,24 @@ Player.CharacterAdded:Connect(function(newCharacter)
     HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 end)
 
+-- Thuộc tính GUI
 gui.Name = "SpeedMenu"
 gui.Parent = game.CoreGui
 
+-- Thuộc tính Frame (Menu)
 frame.Name = "MenuFrame"
 frame.Parent = gui
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30) -- Màu nền tối
 frame.Position = UDim2.new(0.4, 0, 0.3, 0)
-frame.Size = UDim2.new(0, 150, 0, 100)
+frame.Size = UDim2.new(0, 150, 0, 100) -- Kích thước menu nhỏ gọn
 
+-- Viền phát sáng màu xanh lá
 uiStroke.Parent = frame
 uiStroke.Thickness = 2
-uiStroke.Color = Color3.fromRGB(0, 255, 0)
+uiStroke.Color = Color3.fromRGB(0, 255, 0) -- Màu xanh lá
 uiStroke.Transparency = 0.3
 
+-- Nút xóa
 closeButton.Name = "CloseButton"
 closeButton.Parent = frame
 closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
@@ -56,33 +63,38 @@ closeButton.Position = UDim2.new(0, 0, 0.1, 0) -- Đặt nút xóa ở góc trá
 closeButton.Text = "X"
 closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
+-- Nút giảm tốc độ
 decreaseButton.Name = "DecreaseButton"
 decreaseButton.Parent = frame
-decreaseButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+decreaseButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Màu đỏ
 decreaseButton.Size = UDim2.new(0, 40, 0, 30)
-decreaseButton.Position = UDim2.new(0.3, 0, 0.5, 0)
+decreaseButton.Position = UDim2.new(0.3, 0, 0.5, 0) -- Đã điều chỉnh lại vị trí
 decreaseButton.Text = "<"
 decreaseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
+-- Nút tăng tốc độ
 increaseButton.Name = "IncreaseButton"
 increaseButton.Parent = frame
-increaseButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+increaseButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0) -- Màu xanh lá
 increaseButton.Size = UDim2.new(0, 40, 0, 30)
-increaseButton.Position = UDim2.new(0.6, 0, 0.5, 0)
+increaseButton.Position = UDim2.new(0.6, 0, 0.5, 0) -- Đã điều chỉnh lại vị trí
 increaseButton.Text = ">"
 increaseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
+-- Nhãn tốc độ
 speedLabel.Name = "SpeedLabel"
 speedLabel.Parent = frame
-speedLabel.Size = UDim2.new(0, 70, 0, 30)
-speedLabel.Position = UDim2.new(0.5, -35, 0.2, 0)
+speedLabel.Size = UDim2.new(0, 70, 0, 30) -- Kích thước phù hợp với tốc độ
+speedLabel.Position = UDim2.new(0.5, -35, 0.2, 0) -- Đặt ở giữa menu
 speedLabel.Text = "Speed: " .. SpeedMultiplier
 speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
+-- Cập nhật SpeedMultiplier và nhãn tốc độ
 local function updateSpeed()
     speedLabel.Text = "Speed: " .. SpeedMultiplier
 end
 
+-- Nút tăng tốc độ
 increaseButton.MouseButton1Click:Connect(function()
     if SpeedMultiplier < 10 then
         SpeedMultiplier = math.min(10, SpeedMultiplier + 0.5) -- Tăng tốc độ
@@ -90,6 +102,7 @@ increaseButton.MouseButton1Click:Connect(function()
     end
 end)
 
+-- Nút giảm tốc độ
 decreaseButton.MouseButton1Click:Connect(function()
     if SpeedMultiplier > 1 then
         SpeedMultiplier = math.max(1, SpeedMultiplier - 0.5) -- Giảm tốc độ
@@ -97,37 +110,35 @@ decreaseButton.MouseButton1Click:Connect(function()
     end
 end)
 
-local function update(input)
-    local delta = input.Position - dragStart
-    frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-end
-
+-- Kéo thả Menu (hỗ trợ cả PC và cảm ứng)
 frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
         startPos = frame.Position
-        
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
+        isTouch = (input.UserInputType == Enum.UserInputType.Touch)
     end
 end)
 
 frame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
     end
 end)
 
-game:GetService("UserInputService").InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        update(input)
+UserInputService.InputEnded:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+        dragging = false
     end
 end)
 
+-- Xóa GUI khi bấm nút
 closeButton.MouseButton1Click:Connect(function()
     gui:Destroy()
 end)
