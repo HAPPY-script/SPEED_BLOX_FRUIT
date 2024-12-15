@@ -142,3 +142,53 @@ end)
 closeButton.MouseButton1Click:Connect(function()
     gui:Destroy()
 end)
+
+--animation
+
+-- Lấy các dịch vụ cần thiết
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+-- Hàm để áp dụng animation khi di chuyển
+local function setupAnimation()
+    local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait() -- Đảm bảo nhân vật có mặt
+    local Humanoid = Character:WaitForChild("Humanoid")
+
+    -- Tạo animation
+    local Animation = Instance.new("Animation")
+    Animation.AnimationId = "rbxassetid://15012021154" -- Thay ID này bằng ID bạn muốn
+
+    -- Tải animation
+    local AnimationTrack = Humanoid:LoadAnimation(Animation)
+
+    -- Hàm kiểm tra xem nhân vật có di chuyển không
+    local function checkMovement()
+        if Humanoid.MoveDirection.Magnitude > 0 then
+            -- Nếu đang di chuyển, phát animation
+            if not AnimationTrack.IsPlaying then
+                AnimationTrack:Play()
+            end
+        else
+            -- Nếu không di chuyển, dừng animation
+            if AnimationTrack.IsPlaying then
+                AnimationTrack:Stop()
+            end
+        end
+    end
+
+    -- Liên tục kiểm tra tình trạng di chuyển
+    while true do
+        checkMovement()
+        wait(0.1) -- Kiểm tra mỗi 0.1 giây
+    end
+end
+
+-- Lắng nghe sự kiện khi nhân vật được tái tạo
+LocalPlayer.CharacterAdded:Connect(function()
+    setupAnimation() -- Áp dụng lại animation mỗi khi nhân vật hồi sinh
+end)
+
+-- Nếu nhân vật đã có sẵn, thiết lập animation ngay lập tức
+if LocalPlayer.Character then
+    setupAnimation()
+end
