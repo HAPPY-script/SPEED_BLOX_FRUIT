@@ -21,8 +21,14 @@ local UserInputService = game:GetService("UserInputService")
 local function TeleportStep()
     local MoveDirection = Character.Humanoid.MoveDirection
     if MoveDirection.Magnitude > 0 then
+        -- Tính toán vị trí mới
         local NewPosition = HumanoidRootPart.Position + (MoveDirection * DistancePerTeleport)
+        -- Cập nhật vị trí của nhân vật
         HumanoidRootPart.CFrame = CFrame.new(NewPosition)
+        
+        -- Quay nhân vật theo hướng di chuyển
+        local newLookAt = HumanoidRootPart.Position + MoveDirection
+        HumanoidRootPart.CFrame = CFrame.new(HumanoidRootPart.Position, newLookAt)
     end
 end
 
