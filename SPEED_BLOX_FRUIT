@@ -1,13 +1,15 @@
 local gui = Instance.new("ScreenGui")
 local frame = Instance.new("Frame")
 local closeButton = Instance.new("TextButton")
+local toggleButton = Instance.new("TextButton")
 local increaseButton = Instance.new("TextButton")
 local decreaseButton = Instance.new("TextButton")
 local speedLabel = Instance.new("TextLabel")
 local uiStroke = Instance.new("UIStroke")
 local dragging = false
 local dragInput, dragStart, startPos
-local isTouch = false -- Biến xác định thiết bị cảm ứng
+local isTouch = false -- Xác định thiết bị cảm ứng
+local isActive = false -- Trạng thái bật/tắt script
 
 local Player = game.Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
@@ -17,24 +19,23 @@ local DistancePerTeleport = 1.5
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
--- Hàm để teleport nhỏ liên tục khi nhân vật di chuyển
+-- Hàm teleport
 local function TeleportStep()
+    if not isActive then return end -- Nếu tắt script, dừng hoạt động
     local MoveDirection = Character.Humanoid.MoveDirection
     if MoveDirection.Magnitude > 0 then
-        -- Tính toán vị trí mới
         local NewPosition = HumanoidRootPart.Position + (MoveDirection * DistancePerTeleport)
-        -- Cập nhật vị trí của nhân vật
         HumanoidRootPart.CFrame = CFrame.new(NewPosition)
-        
-        -- Quay nhân vật theo hướng di chuyển
         local newLookAt = HumanoidRootPart.Position + MoveDirection
         HumanoidRootPart.CFrame = CFrame.new(HumanoidRootPart.Position, newLookAt)
     end
 end
 
 RunService.RenderStepped:Connect(function()
-    for i = 1, SpeedMultiplier do
-        TeleportStep()
+    if isActive then
+        for i = 1, SpeedMultiplier do
+            TeleportStep()
+        end
     end
 end)
 
@@ -43,59 +44,68 @@ Player.CharacterAdded:Connect(function(newCharacter)
     HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 end)
 
--- Thuộc tính GUI
+-- GUI
 gui.Name = "SpeedMenu"
 gui.Parent = game.CoreGui
 
--- Thuộc tính Frame (Menu)
+-- Frame
 frame.Name = "MenuFrame"
 frame.Parent = gui
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30) -- Màu nền tối
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 30) -- Màu nền tối
 frame.Position = UDim2.new(0.4, 0, 0.3, 0)
-frame.Size = UDim2.new(0, 150, 0, 100) -- Kích thước menu nhỏ gọn
+frame.Size = UDim2.new(0, 200, 0, 150) -- Kích thước lớn hơn
 
--- Viền phát sáng màu xanh lá
+-- Viền phát sáng màu xanh lam
 uiStroke.Parent = frame
 uiStroke.Thickness = 2
-uiStroke.Color = Color3.fromRGB(0, 255, 0) -- Màu xanh lá
+uiStroke.Color = Color3.fromRGB(0, 150, 255) -- Màu xanh lam
 uiStroke.Transparency = 0.3
 
--- Nút xóa
+-- Nút đóng
 closeButton.Name = "CloseButton"
 closeButton.Parent = frame
 closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 closeButton.Size = UDim2.new(0, 20, 0, 20)
-closeButton.Position = UDim2.new(0, 0, 0.1, 0) -- Đặt nút xóa ở góc trái
+closeButton.Position = UDim2.new(0.9, 0, 0, 0) -- Góc trên phải
 closeButton.Text = "X"
 closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+
+-- Nút bật/tắt script
+toggleButton.Name = "ToggleButton"
+toggleButton.Parent = frame
+toggleButton.BackgroundColor3 = Color3.fromRGB(0, 150, 255) -- Màu xanh lam
+toggleButton.Size = UDim2.new(0, 80, 0, 30)
+toggleButton.Position = UDim2.new(0.1, 0, 0.1, 0)
+toggleButton.Text = "Toggle Off"
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 -- Nút giảm tốc độ
 decreaseButton.Name = "DecreaseButton"
 decreaseButton.Parent = frame
-decreaseButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Màu đỏ
+decreaseButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 decreaseButton.Size = UDim2.new(0, 40, 0, 30)
-decreaseButton.Position = UDim2.new(0.3, 0, 0.5, 0) -- Đã điều chỉnh lại vị trí
+decreaseButton.Position = UDim2.new(0.3, 0, 0.6, 0)
 decreaseButton.Text = "<"
 decreaseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 -- Nút tăng tốc độ
 increaseButton.Name = "IncreaseButton"
 increaseButton.Parent = frame
-increaseButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0) -- Màu xanh lá
+increaseButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
 increaseButton.Size = UDim2.new(0, 40, 0, 30)
-increaseButton.Position = UDim2.new(0.6, 0, 0.5, 0) -- Đã điều chỉnh lại vị trí
+increaseButton.Position = UDim2.new(0.6, 0, 0.6, 0)
 increaseButton.Text = ">"
 increaseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
 -- Nhãn tốc độ
 speedLabel.Name = "SpeedLabel"
 speedLabel.Parent = frame
-speedLabel.Size = UDim2.new(0, 70, 0, 30) -- Kích thước phù hợp với tốc độ
-speedLabel.Position = UDim2.new(0.5, -35, 0.2, 0) -- Đặt ở giữa menu
+speedLabel.Size = UDim2.new(0, 100, 0, 30)
+speedLabel.Position = UDim2.new(0.25, 0, 0.4, 0)
 speedLabel.Text = "Speed: " .. SpeedMultiplier
 speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 
--- Cập nhật SpeedMultiplier và nhãn tốc độ
+-- Cập nhật tốc độ
 local function updateSpeed()
     speedLabel.Text = "Speed: " .. SpeedMultiplier
 end
@@ -103,7 +113,7 @@ end
 -- Nút tăng tốc độ
 increaseButton.MouseButton1Click:Connect(function()
     if SpeedMultiplier < 10 then
-        SpeedMultiplier = math.min(10, SpeedMultiplier + 0.5) -- Tăng tốc độ
+        SpeedMultiplier = math.min(10, SpeedMultiplier + 0.5)
         updateSpeed()
     end
 end)
@@ -111,12 +121,18 @@ end)
 -- Nút giảm tốc độ
 decreaseButton.MouseButton1Click:Connect(function()
     if SpeedMultiplier > 1 then
-        SpeedMultiplier = math.max(1, SpeedMultiplier - 0.5) -- Giảm tốc độ
+        SpeedMultiplier = math.max(1, SpeedMultiplier - 0.5)
         updateSpeed()
     end
 end)
 
--- Kéo thả Menu (hỗ trợ cả PC và cảm ứng)
+-- Toggle script
+toggleButton.MouseButton1Click:Connect(function()
+    isActive = not isActive
+    toggleButton.Text = isActive and "Toggle On" or "Toggle Off"
+end)
+
+-- Kéo thả
 frame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
@@ -144,7 +160,7 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Xóa GUI khi bấm nút
+-- Nút đóng
 closeButton.MouseButton1Click:Connect(function()
     gui:Destroy()
 end)
