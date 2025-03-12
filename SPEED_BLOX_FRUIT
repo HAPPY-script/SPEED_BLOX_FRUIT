@@ -166,7 +166,7 @@ closeButton.MouseButton1Click:Connect(function()
 end)
 
 --animation
-
+--[[
 -- Lấy các dịch vụ cần thiết
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -214,3 +214,4 @@ end)
 if LocalPlayer.Character then
     setupAnimation()
 end
+]]
